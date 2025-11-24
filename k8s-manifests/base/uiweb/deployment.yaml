@@ -32,7 +32,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: uiweb
-          image: webtruyenacr17501.azurecr.io/uiweb:main-7e95d8f
+          image: webtruyenacr17501.azurecr.io/uiweb:main-12f54b3
           imagePullPolicy: Always
           ports:
             - name: http
