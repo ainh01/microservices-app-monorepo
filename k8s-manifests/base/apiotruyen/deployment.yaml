@@ -1,0 +1,132 @@
+apiVersion: apps/v1  
+kind: Deployment  
+metadata:  
+  name: apiotruyen  
+  namespace: microservices-app  
+  labels:  
+    app: apiotruyen  
+    tier: backend  
+    version: v1  
+spec:  
+  # Replica count (3 for HA as specified)  
+  replicas: 1  
+  
+  # Selector must match template labels  
+  selector:  
+    matchLabels:  
+      app: apiotruyen  
+  
+  # Deployment strategy  
+  strategy:  
+    type: RollingUpdate  
+    rollingUpdate:  
+      maxSurge: 1        # Allow 1 extra pod during update  
+      maxUnavailable: 1  # Allow 1 pod to be unavailable  
+  
+  # Pod template  
+  template:  
+    metadata:  
+      labels:  
+        app: apiotruyen  
+        tier: backend  
+        version: v1  
+      annotations:  
+        # Prometheus scraping (if you add monitoring later)  
+        prometheus.io/scrape: "true"  
+        prometheus.io/port: "8000"  
+        prometheus.io/path: "/metrics"  
+    
+    spec:  
+      # Image pull secret (only needed if not using managed identity)  
+      imagePullSecrets:  
+        - name: acr-secret  # Remove this line if using managed identity  
+      
+      # Security context for pod  
+      securityContext:  
+        runAsNonRoot: true  
+        runAsUser: 1000  
+        fsGroup: 1000  
+      
+      containers:  
+      - name: apiotruyen  
+        # Image will be updated by CI workflow  
+        image: webtruyenacr17501.azurecr.io/apiotruyen:latest  
+        imagePullPolicy: Always  
+        
+        # Container ports  
+        ports:  
+        - name: http  
+          containerPort: 8001  
+          protocol: TCP  
+        
+        # Environment variables  
+        env:  
+        - name: ENVIRONMENT  
+          value: "production"  
+        - name: LOG_LEVEL  
+          value: "INFO"  
+        # Add more env vars as needed from ConfigMap/Secret  
+        # - name: DB_PASSWORD  
+        #   valueFrom:  
+        #     secretKeyRef:  
+        #       name: app-secrets  
+        #       key: db-password  
+        
+        # Resource limits (critical for 8GB total RAM cluster)  
+        resources:  
+          requests:  
+            memory: "512Mi"   # Guaranteed memory  
+            cpu: "250m"       # 0.25 CPU cores  
+          limits:  
+            memory: "768Mi"   # Maximum memory (1.5x requests)  
+            cpu: "500m"       # Maximum CPU  
+        
+        # Liveness probe (detect crashed containers)  
+        livenessProbe:  
+          httpGet:  
+            path: /health  
+            port: http  
+          initialDelaySeconds: 30  # Wait for app startup  
+          periodSeconds: 10        # Check every 10s  
+          timeoutSeconds: 5        # Timeout after 5s  
+          failureThreshold: 3      # Restart after 3 failures  
+          successThreshold: 1  
+        
+        # Readiness probe (detect when ready for traffic)  
+        readinessProbe:  
+          httpGet:  
+            path: /health  
+            port: http  
+          initialDelaySeconds: 10  
+          periodSeconds: 5  
+          timeoutSeconds: 3  
+          failureThreshold: 3  
+          successThreshold: 1  
+        
+        # Startup probe (for slow-starting apps)  
+        startupProbe:  
+          httpGet:  
+            path: /health  
+            port: http  
+          initialDelaySeconds: 0  
+          periodSeconds: 10  
+          timeoutSeconds: 3  
+          failureThreshold: 30  # Allow up to 5 minutes (30 * 10s)  
+          successThreshold: 1  
+        
+        # Security context for container  
+        securityContext:  
+          allowPrivilegeEscalation: false  
+          readOnlyRootFilesystem: false  # Set true if app doesn't write to disk  
+          capabilities:  
+            drop:  
+            - ALL  
+      
+      # Termination grace period  
+      terminationGracePeriodSeconds: 30  
+      
+      # DNS policy  
+      dnsPolicy: ClusterFirst  
+      
+      # Restart policy  
+      restartPolicy: Always  

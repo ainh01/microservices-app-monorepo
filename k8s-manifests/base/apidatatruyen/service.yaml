@@ -1,0 +1,30 @@
+apiVersion: v1  
+kind: Service  
+metadata:  
+  name: apidatatruyen  
+  namespace: microservices-app  
+  labels:  
+    app: apidatatruyen  
+    tier: backend  
+  annotations:  
+    # Azure-specific annotations  
+    service.beta.kubernetes.io/azure-load-balancer-internal: "false"  # Public LB  
+spec:  
+  type: LoadBalancer  
+  
+  # Session affinity (optional, for sticky sessions)  
+  sessionAffinity: None  
+  
+  # Selector matches Deployment pod labels  
+  selector:  
+    app: apidatatruyen  
+  
+  # Ports configuration  
+  ports:  
+  - name: http  
+    protocol: TCP  
+    port: 8000        # External port on LoadBalancer  
+    targetPort: http  # Maps to container port named 'http'  
+  
+  # Source IP preservation  
+  externalTrafficPolicy: Cluster  # Or 'Local' for source IP preservation  
