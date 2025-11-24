@@ -1,84 +1,68 @@
-__pycache__  
-*.pyc  
-*.pyo  
-*.pyd  
-.Python  
-.env  
-.venv  
-venv/  
-pip-log.txt  
-pip-delete-this-directory.txt  
-.pytest_cache  
-.coverage  
-htmlcov/  
-*.log  
-.git  
-.gitignore  
-README.md  
-EOF  
+# Git
+.git
+.gitignore
+.gitattributes
 
-cp services/apidatatruyen/.dockerignore services/apiotruyen/.dockerignore  
+# Python cache
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
 
-cat > services/uiweb/.dockerignore << 'EOF'  
-node_modules  
-npm-debug.log  
-.npm  
-.env  
-.env.local  
-.git  
-.gitignore  
-README.md  
-.next  
-.nuxt  
-dist  
-build  
-EOF  
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+.env
 
-cp services/uiweb/.dockerignore services/uiadmin/.dockerignore  
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
 
-cat > README.md << 'EOF'  
-# Microservices Application Monorepo  
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
 
-This repository contains a complete microservices application with automated CI/CD pipeline.  
+# Documentation
+docs/
+*.md
+README.md
+LICENSE
 
-## Architecture  
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
 
-- **Backend Services**:  
-  - `apidatatruyen` (Python)  
-  - `apiotruyen` (Python)  
-- **Frontend Services**:  
-  - `uiweb` (JavaScript)  
-  - `uiadmin` (JavaScript)  
+# Environment variables (build args should be used instead)
+.env
+.env.local
+.env.*.local
 
-## CI/CD Pipeline  
+# Logs
+*.log
+logs/
 
-- **CI**: GitHub Actions builds Docker images on code changes  
-- **CD**: ArgoCD deploys to Azure Kubernetes Service  
-- **Registry**: Azure Container Registry  
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
-## Documentation  
+# Build artifacts
+dist/
+build/
+*.egg-info/
 
-See `docs/` directory for detailed documentation:  
-- `ARCHITECTURE.md` - System architecture  
-- `DEPLOYMENT.md` - Deployment procedures  
-- `TROUBLESHOOTING.md` - Common issues and solutions  
-
-## Directory Structure  
-
-```  
-.  
-├── .github/workflows/          # GitHub Actions CI workflows  
-├── services/                   # Service source code  
-├── k8s-manifests/              # Kubernetes manifests  
-├── scripts/                    # Automation scripts  
-└── docs/                       # Documentation  
-```  
-EOF  
-
-echo "Repository structure created successfully!"  
-if command -v tree &> /dev/null; then  
-    tree -L 3  
-else  
-    find . -type d -not -path '*/\.*' | sort | sed 's|[^/]*/| |g'  
-fi  
+# OS
+.DS_Store
+Thumbs.db
 

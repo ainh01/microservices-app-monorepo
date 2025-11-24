@@ -1,0 +1,124 @@
+name: CI - UI Admin  
+
+# Trigger conditions  
+on:  
+  push:  
+    branches:  
+      - main  
+      - develop  
+    paths:  
+      - 'services/uiadmin/**'  
+      - '.github/workflows/ci-uiadmin.yml'  
+  pull_request:  
+    branches:  
+      - main  
+      - develop  
+    paths:  
+      - 'services/uiadmin/**'  
+
+# Environment variables available to all jobs  
+env:  
+  SERVICE_NAME: uiadmin  
+  SERVICE_PATH: services/uiadmin  
+  REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}  
+
+jobs:  
+  build-and-push:  
+    name: Build and Push Docker Image  
+    runs-on: ubuntu-latest  
+    
+    # Permissions needed for GitHub Actions  
+    permissions:  
+      contents: write  # For pushing manifest updates  
+      packages: write  # For container registry  
+      
+    steps:  
+      # Step 1: Checkout repository code  
+      - name: Checkout Code  
+        uses: actions/checkout@v4  
+        with:  
+          fetch-depth: 0  # Full history for better tagging  
+          token: ${{ secrets.GIT_TOKEN || github.token }}  
+      
+      # Step 2: Set up Docker Buildx (advanced Docker builds)  
+      - name: Set up Docker Buildx  
+        uses: docker/setup-buildx-action@v3  
+      
+      # Step 3: Log in to Azure Container Registry  
+      - name: Log in to ACR  
+        uses: docker/login-action@v3  
+        with:  
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}  
+          username: ${{ secrets.ACR_USERNAME }}  
+          password: ${{ secrets.ACR_PASSWORD }}  
+      
+      # Step 4: Extract metadata for tagging  
+      - name: Extract Docker Metadata  
+        id: meta  
+        uses: docker/metadata-action@v5  
+        with:  
+          images: ${{ env.REGISTRY }}/${{ env.SERVICE_NAME }}  
+          tags: |  
+            # Tag with branch name and short SHA  
+            type=raw,value={{branch}}-{{sha}}  
+            # Tag with branch name only  
+            type=ref,event=branch  
+            # Tag 'latest' only on main branch  
+            type=raw,value=latest,enable={{is_default_branch}}  
+      
+      # Step 5: Build and push Docker image  
+      - name: Build and Push Docker Image  
+        id: build  
+        uses: docker/build-push-action@v5  
+        with:  
+          context: ./${{ env.SERVICE_PATH }}  
+          file: ./${{ env.SERVICE_PATH }}/Dockerfile  
+          # Only push on push events (not PRs)  
+          push: ${{ github.event_name != 'pull_request' }}  
+          tags: ${{ steps.meta.outputs.tags }}  
+          labels: ${{ steps.meta.outputs.labels }}  
+          # Enable caching for faster builds  
+          cache-from: type=gha  
+          cache-to: type=gha,mode=max  
+          # Build arguments (if needed)  
+          build-args: |  
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}  
+            VCS_REF=${{ github.sha }}  
+      
+      # Step 6: Update Kubernetes manifest with new image tag (only on push to main)  
+      - name: Update Kubernetes Manifest  
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'  
+        run: |  
+          # Extract the image tag that was pushed  
+          IMAGE_TAG="${GITHUB_REF_NAME}-${GITHUB_SHA::7}"  
+          IMAGE_FULL="${{ env.REGISTRY }}/${{ env.SERVICE_NAME }}:${IMAGE_TAG}"  
+          
+          # Update deployment.yaml with new image  
+          yq eval ".spec.template.spec.containers[0].image = \"${IMAGE_FULL}\"" \
+            -i k8s-manifests/base/${{ env.SERVICE_NAME }}/deployment.yaml  
+          
+          # Configure git  
+          git config user.name "github-actions[bot]"  
+          git config user.email "github-actions[bot]@users.noreply.github.com"  
+          
+          # Commit and push if there are changes  
+          if git diff --quiet; then  
+            echo "No changes to manifest"  
+          else  
+            git add k8s-manifests/base/${{ env.SERVICE_NAME }}/deployment.yaml  
+            git commit -m "chore: update ${{ env.SERVICE_NAME }} image to ${IMAGE_TAG}"  
+            git push  
+          fi  
+      
+      # Step 7: Output summary  
+      - name: Job Summary  
+        run: |  
+          echo "### 🚀 Build Complete" >> $GITHUB_STEP_SUMMARY  
+          echo "" >> $GITHUB_STEP_SUMMARY  
+          echo "**Service:** ${{ env.SERVICE_NAME }}" >> $GITHUB_STEP_SUMMARY  
+          echo "**Branch:** ${GITHUB_REF_NAME}" >> $GITHUB_STEP_SUMMARY  
+          echo "**Commit:** ${GITHUB_SHA::7}" >> $GITHUB_STEP_SUMMARY  
+          echo "**Image Tags:**" >> $GITHUB_STEP_SUMMARY  
+          echo '```' >> $GITHUB_STEP_SUMMARY  
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY  
+          echo '```' >> $GITHUB_STEP_SUMMARY  
