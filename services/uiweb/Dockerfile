@@ -1,4 +1,3 @@
-# Use a lightweight Node.js 18 image as the base
 FROM node:18-alpine  
 
 WORKDIR /app  
@@ -10,12 +9,15 @@ RUN yarn install
 # Copy source  
 COPY . .  
 
-# Fix permissions - run as node user  
-RUN chown -R node:node /app  
+# Create .nuxt directory and fix permissions  
+RUN mkdir -p /app/.nuxt /app/.output && \
+    chown -R node:node /app && \
+    chmod -R 755 /app  
 
 USER node  
-# Expose port 3000 (Adjust this if your app runs on a different port, e.g., 5173 for Vite)
-EXPOSE 3000
 
-# Start the application
-CMD ["yarn", "dev"]
+# Expose port 3000  
+EXPOSE 3000  
+
+# Start the application  
+CMD ["yarn", "dev"]  
