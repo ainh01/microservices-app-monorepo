@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.npm
+.env
+.env.local
+.git
+.gitignore
+README.md
+.next
+.nuxt
+dist
+build
