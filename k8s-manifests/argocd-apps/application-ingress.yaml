@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1  
+kind: Application  
+metadata:  
+  name: ingress  
+  namespace: argocd  
+  finalizers:  
+    - resources-finalizer.argocd.argoproj.io  
+spec:  
+  project: default  
+  
+  source:  
+    repoURL: https://github.com/ainh01/microservices-app-monorepo  
+    targetRevision: main  
+    path: k8s-manifests/base/ingress  
+  
+  destination:  
+    server: https://kubernetes.default.svc  
+    namespace: microservices-app  
+  
+  syncPolicy:  
+    automated:  
+      prune: true  
+      selfHeal: true  
+    syncOptions:  
+      - CreateNamespace=true  

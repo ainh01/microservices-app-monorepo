@@ -10,7 +10,7 @@ metadata:
     # Azure-specific annotations  
     service.beta.kubernetes.io/azure-load-balancer-internal: "false"  # Public LB  
 spec:  
-  type: LoadBalancer  
+  type: ClusterIP  
   
   # Session affinity (optional, for sticky sessions)  
   sessionAffinity: None  

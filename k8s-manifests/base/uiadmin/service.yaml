@@ -7,7 +7,7 @@ metadata:
     app: uiadmin  
     tier: frontend  
 spec:  
-  type: LoadBalancer  
+  type: ClusterIP  
   selector:  
     app: uiadmin  
   ports:  

@@ -1,0 +1,61 @@
+apiVersion: networking.k8s.io/v1  
+kind: Ingress  
+metadata:  
+  name: unified-ingress  
+  namespace: microservices-app  
+  annotations:  
+    nginx.ingress.kubernetes.io/rewrite-target: /$2  
+    nginx.ingress.kubernetes.io/use-regex: "true"  
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"  
+    nginx.ingress.kubernetes.io/enable-cors: "true"  
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"  
+spec:  
+  ingressClassName: nginx  
+  
+  rules:  
+  - http:  # No host = works with IP address  
+      paths:  
+      # Backend API: /api/data/*  
+      - path: /api/data(/|$)(.*)  
+        pathType: Prefix  
+        backend:  
+          service:  
+            name: apidatatruyen  
+            port:  
+              number: 8000  
+      
+      # Backend API: /api/o/*  
+      - path: /api/o(/|$)(.*)  
+        pathType: Prefix  
+        backend:  
+          service:  
+            name: apiotruyen  
+            port:  
+              number: 8001  
+      
+      # Frontend Web: /web/*  
+      - path: /web(/|$)(.*)  
+        pathType: Prefix  
+        backend:  
+          service:  
+            name: uiweb  
+            port:  
+              number: 3000  
+      
+      # Frontend Admin: /admin/*  
+      - path: /admin(/|$)(.*)  
+        pathType: Prefix  
+        backend:  
+          service:  
+            name: uiadmin  
+            port:  
+              number: 3000  
+      
+      # Default route to main web app  
+      - path: /()(.*)  
+        pathType: Prefix  
+        backend:  
+          service:  
+            name: uiweb  
+            port:  
+              number: 3000  
