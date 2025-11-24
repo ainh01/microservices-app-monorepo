@@ -1,25 +1,25 @@
-name: CI - API Data Truyen  
+name: CI - UI Web  
 
-# Trigger conditions  
+# This is Trigger conditions  
 on:  
   push:  
     branches:  
       - main  
       - develop  
     paths:  
-      - 'services/apidatatruyen/**'  
-      - '.github/workflows/ci-apidatatruyen.yml'  
+      - 'services/uiweb/**'  
+      - '.github/workflows/ci-uiweb.yml'  
   pull_request:  
     branches:  
       - main  
       - develop  
     paths:  
-      - 'services/apidatatruyen/**'  
+      - 'services/uiweb/**'  
 
 # Environment variables available to all jobs  
 env:  
-  SERVICE_NAME: apidatatruyen  
-  SERVICE_PATH: services/apidatatruyen  
+  SERVICE_NAME: uiweb  
+  SERVICE_PATH: services/uiweb  
   REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}  
 
 jobs:  
